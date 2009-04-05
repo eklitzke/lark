@@ -1,20 +1,21 @@
 
 namespace py lark.gen
+namespace cpp lark
 
 typedef string UUID 
 
-struct Song { 
+struct File { 
   UUID id,
-  string artist,
+  string fileSystemPath,
+  i64 timeModified, // unix timestamp for when this was last modified
+  i64 timeAdded, // unix timestamp for when this was last used
   string album,
-  string title,
-  string year,
-  string track,
+  string artist,
   string genre,
-  string comment,
-  string filesystem_path,
-  i64 duration
-
+  string title,
+  string track,
+  string year,
+  i64 duration,
 }
 
 enum PlaylistType { 
@@ -25,7 +26,7 @@ struct Playlist {
   UUID id,
   string name,
   PlaylistType playlist_type,
-  list<Song> songs;
+  list<File> songs;
 }
 
 enum PlayState {
@@ -37,20 +38,18 @@ enum PlayState {
 service LarkService {
   void ping(),
   // database
-  void scan(string filesystem_path),
-  void remove(list<UUID> song_ids),
+  oneway void scan(string filesystem_path),
+  oneway void remove(list<UUID> song_ids),
 
   // play commands
-  void setState(PlayState newState),
-  void play(UUID song_id),
+  oneway void setState(PlayState newState),
+  oneway void play(UUID fileID),
+  oneway void playURL(string URL), 
 
   // playlist commands
-  void move(list<UUID> songs, i32 position),
-
-  list<Song> listSongs(),
+  oneway void move(list<UUID> fileIDs, i32 position),
+  list<File> listFiles(),
   list<Playlist> listPlaylists()
-
-  
 }
 
 

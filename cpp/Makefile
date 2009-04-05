@@ -1,6 +1,3 @@
-LOCALE = en_US
-
-		   
 CPPFLAGS = -L/opt/local/lib \
 		   -L/usr/local/lib \
 		   -I/usr/local/include/boost-1_38 \
@@ -20,19 +17,25 @@ CPPFLAGS = -L/opt/local/lib \
 		   $(shell PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/usr/local/lib/pkgconfig pkg-config --libs --cflags gstreamer-0.10 thrift) \
 		   -lavutil -lavcodec -lavformat
 
-all: gen indexer play lark_service_handler
+all: gen larkd
 
-gen/LarkService.o: gen/LarkService.cpp
+larkd_files = larkd.cpp \
+			  indexer.cpp \
+			  indexer.h \
+			  lark_service_handler.h \
+			  lark_service_handler.cpp \
+			  player.cpp \
+			  player.h \
+			  gen/LarkService.cpp \
+			  gen/LarkService.h \
+			  gen/lark_constants.cpp \
+			  gen/lark_constants.h \
+			  gen/lark_types.cpp \
+			  gen/lark_types.h
 
-gen/lark_constants.o: gen/lark_constants.cpp
+%.o: %.cpp %.h
 
-gen/lark_types.o: gen/lark_types.cpp
-
-indexer: indexer.cpp 
-
-lark_service_handler: lark_service_handler.cpp gen/LarkService.o gen/lark_constants.o gen/lark_types.o
-
-play: play.cpp
+larkd: larkd.o indexer.o player.o gen/lark_constants.o gen/lark_types.o gen/LarkService.o lark_service_handler.o
 
 gen:
 	rm -rf gen-cpp
@@ -40,4 +43,4 @@ gen:
 	mv gen-cpp gen
 
 clean:
-	rm -rf gen gen-cpp indexer play lark_service_handler
+	rm -rf gen gen-cpp larkd

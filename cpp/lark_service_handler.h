@@ -21,6 +21,7 @@
 #include <server/TSimpleServer.h>
 #include <transport/TServerSocket.h>
 #include <transport/TBufferTransports.h>
+#include "indexer.h"
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -32,11 +33,13 @@ using namespace apache::thrift::server;
 #define DAEMON_H
 using namespace std;
 using namespace boost;
+using namespace lark;
 
 class LarkServiceHandler : virtual public LarkServiceIf {
  public:
   LarkServiceHandler() {
     // Your initialization goes here
+	indexer.reset(new Indexer("songs.db"));	
   }
 
   void ping() {
@@ -47,6 +50,7 @@ class LarkServiceHandler : virtual public LarkServiceIf {
   void scan(const std::string& filesystem_path) {
     // Your implementation goes here
     printf("scan\n");
+	indexer->scan(filesystem_path); 
   }
 
   void remove(const std::vector<UUID> & song_ids) {
@@ -64,12 +68,16 @@ class LarkServiceHandler : virtual public LarkServiceIf {
     printf("play\n");
   }
 
-  void move(const std::vector<UUID> & songs, const int32_t position) {
+  void playURL(const string & url) {
+	  cout << "play url:" << url << endl;
+  }
+
+  void move(const int32_t position, const std::vector<UUID> & fileIDs) {
     // Your implementation goes here
     printf("move\n");
   }
 
-  void listSongs(std::vector<Song> & _return) {
+  void listFiles(std::vector<File> & _return) {
     // Your implementation goes here
     printf("listSongs\n");
   }
@@ -78,6 +86,9 @@ class LarkServiceHandler : virtual public LarkServiceIf {
     // Your implementation goes here
     printf("listPlaylists\n");
   }
+
+ private:
+  shared_ptr<Indexer> indexer;
 
 };
 
