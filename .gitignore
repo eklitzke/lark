@@ -1,0 +1,5 @@
+**/gen
+py/lark/gen
+cpp/lark_service_handler
+cpp/play
+cpp/indexer

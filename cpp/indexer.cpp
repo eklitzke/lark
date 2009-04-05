@@ -1,39 +1,4 @@
-#include <ossp/uuid.h>
-#include <iostream>
-#include <getopt.h>
-#include <vector>
-#include <boost/shared_ptr.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <tag.h>
-#include <fileref.h>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/lexical_cast.hpp>
-#include <sqlite3.h>
-
-using namespace std;
-using namespace boost;
-
-namespace fs = boost::filesystem;
-
-class SQLite3Error: public boost::exception {  
-	public:
-		SQLite3Error(int result_code) {
-			this->_result_code = result_code;
-		};
-		int result_code() { 
-			return _result_code;
-		}
-	private:
-		int _result_code;
-};
-
-string new_uuid();
-void print_usage(const char *name);
-
-void print_usage(const char *name) {
-	cout << name << ":";
-}
+#include "indexer.h"
 
 static const string ARTIST = "artist";
 static const string ALBUM = "album";
@@ -42,25 +7,16 @@ static const string GENRE = "genre";
 static const string TRACK = "track";
 static const string YEAR = "year";
 
-class Indexer {
-	public:
-		Indexer(const string & database_path);
-		virtual ~Indexer();
-		virtual void scan(const string &path);
-	protected:
-		virtual void insert(const string & songID, const string & path);
-		virtual void init_db();
-		virtual void insertField(const string & songID, const string & field, const string & value);
-		virtual int check_sqlite3_result(int result_code);
-		virtual bool exists(const string & path); 
-	private:
-		sqlite3 *db;
-	
-};
+
+void print_usage(const char *name);
+
+void print_usage(const char *name) {
+	cout << name << ":" << endl;
+	cout << "\t-h\t\tThis message." << endl;
+}
 
 Indexer::~Indexer() {
 	if (this->db != NULL) {
-		cerr << "closing db" << endl;
 		int result_code = sqlite3_close(this->db);
 		this->db = NULL;
 	}
@@ -72,15 +28,31 @@ Indexer::Indexer(const string & database_path) {
 	this->init_db();
 };
 
-bool Indexer::exists(const string & path) { 
-	
-	return true;
+bool Indexer::path_exists(const string & path) { 
+	sqlite3_stmt *select_statement = NULL;
+	string query = "select count(*) from song where path = ?";
+	this->check_sqlite3_result(sqlite3_prepare(this->db, query.c_str(), -1, &select_statement, NULL));
+	this->check_sqlite3_result(sqlite3_bind_text(select_statement, 1, path.c_str(), path.size(), SQLITE_STATIC));
+	int num = 0;
+	while (true) {
+		int result_code = this->check_sqlite3_result(sqlite3_step(select_statement));
+		if (result_code == SQLITE_ROW) {
+			num = sqlite3_column_int(select_statement, 0);
+		} else if (result_code == SQLITE_DONE) {
+			this->check_sqlite3_result(sqlite3_finalize(select_statement));
+			break;
+		}
+	}
+	return (num > 0);
 }
+
 void Indexer::init_db() { 
 	this->check_sqlite3_result(sqlite3_exec(this->db, "create table if not exists "
 		" song (id text primary key, path text default '') ", NULL, NULL, NULL));
 	this->check_sqlite3_result(sqlite3_exec(this->db, "create table if not exists "
 		" song_field (id integer unsigned primary key, song_id text, field text, value text)", NULL, NULL, NULL));
+	this->check_sqlite3_result(sqlite3_exec(this->db, "create index if not exists "
+		" song_path_idx ON song(path) ", NULL, NULL, NULL));
 }
 
 void Indexer::scan(const string & a_path) {
@@ -94,6 +66,8 @@ void Indexer::scan(const string & a_path) {
 			this->scan(s);
 		}
 	} else if (fs::is_regular_file(a_path)) {
+		if (this->path_exists(a_path))
+			return;
 		TagLib::FileRef file_ref(a_path.c_str(), false);
 		if (!file_ref.isNull() && file_ref.tag()) {
 			cout << endl;
@@ -139,7 +113,9 @@ void Indexer::insert(const string & songID, const string & path) {
 	this->check_sqlite3_result(sqlite3_bind_text(insert_statement, 1, songID.c_str(), songID.size(), SQLITE_STATIC));
 	this->check_sqlite3_result(sqlite3_bind_text(insert_statement, 2, path.c_str(), path.size(), SQLITE_STATIC));
 	this->check_sqlite3_result(sqlite3_step(insert_statement));
+	this->check_sqlite3_result(sqlite3_finalize(insert_statement));
 }
+
 
 int Indexer::check_sqlite3_result(int result_code) {
 	switch (result_code) {
@@ -164,6 +140,7 @@ void Indexer::insertField(const string & songID, const string & field, const str
 	this->check_sqlite3_result(sqlite3_bind_text(insert_statement, 2, field.c_str(), field.size(), SQLITE_STATIC));
 	this->check_sqlite3_result(sqlite3_bind_text(insert_statement, 3, value.c_str(), value.size(), SQLITE_STATIC));
 	this->check_sqlite3_result(sqlite3_step(insert_statement));
+	this->check_sqlite3_result(sqlite3_finalize(insert_statement));
 
 }
 
@@ -194,12 +171,7 @@ int main(int argc, char *argv[]) {
 	vector<string>::const_iterator cii;
 	for (cii = paths.begin(); cii != paths.end(); ++cii) {
 		string s(*cii);
-		try {
-			indexer.scan(s);
-		} catch (SQLite3Error & sqlite_error) {
-			cout << "sqlite3 error:" << sqlite_error.result_code() << endl;
-			return 1;
-		}
+		indexer.scan(s);
 	}
 	cout << endl;
 

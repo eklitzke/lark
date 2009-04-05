@@ -1,4 +1,5 @@
 
+namespace py lark.gen
 
 typedef string UUID 
 
@@ -33,7 +34,7 @@ enum PlayState {
 	PAUSED
 }
 
-service SongService {
+service LarkService {
   void ping(),
   // database
   void scan(string filesystem_path),
