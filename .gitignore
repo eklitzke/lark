@@ -10,4 +10,15 @@ cpp/indexer
 .deps
 *.swp
 *.old
-
+cpp/larkd
+config.h
+config.log
+config.status
+configure
+configure.scan
+autoscan.log
+Makefile
+Makefile.in
+autom4te.cache
+config.guess
+config.sub

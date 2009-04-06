@@ -14,27 +14,6 @@
 
 
 
-#CPPFLAGS = -L/opt/local/lib \
-#		   -L/usr/local/lib \
-#		   -I/usr/local/include/boost-1_38 \
-#		   -I/opt/local/include/taglib \
-#		   -I/opt/local/include/libavcodec \
-#		   -I/opt/local/include/libavformat \
-#		   -I/usr/local/include \
-#		   -I/opt/local/include \
-#		   -lboost_system-xgcc40-mt-1_38 \
-#		   -lboost_filesystem-xgcc40-mt-1_38 \
-#		   -lsqlite3 \
-#		   -luuid \
-#		   -ltag \
-#		   -lz \
-#		   -lm \
-#		   $(shell pkg-config --libs --cflags gstreamer-0.10) \
-#		   $(shell PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/usr/local/lib/pkgconfig pkg-config --libs --cflags gstreamer-0.10 thrift) \
-#		   -lavutil -lavcodec -lavformat
-#
-#all: gen larkd
-
 
 pkgdatadir = $(datadir)/lark
 pkglibdir = $(libdir)/lark
@@ -58,6 +37,9 @@ subdir = cpp
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/aclocal/ax_boost_base.m4 \
+	$(top_srcdir)/aclocal/ax_boost_filesystem.m4 \
+	$(top_srcdir)/aclocal/ax_boost_system.m4 \
+	$(top_srcdir)/aclocal/ax_boost_thread.m4 \
 	$(top_srcdir)/aclocal/libtool.m4 \
 	$(top_srcdir)/aclocal/ltoptions.m4 \
 	$(top_srcdir)/aclocal/ltsugar.m4 \
@@ -72,15 +54,14 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_larkd_OBJECTS = larkd-larkd.$(OBJEXT) larkd-larkd.$(OBJEXT) \
-	larkd-lark_types.$(OBJEXT) larkd-lark_constants.$(OBJEXT) \
-	larkd-LarkService.$(OBJEXT) \
+am_larkd_OBJECTS = larkd-larkd.$(OBJEXT) larkd-lark_types.$(OBJEXT) \
+	larkd-lark_constants.$(OBJEXT) larkd-LarkService.$(OBJEXT) \
 	larkd-lark_service_handler.$(OBJEXT) larkd-player.$(OBJEXT) \
 	larkd-indexer.$(OBJEXT)
 larkd_OBJECTS = $(am_larkd_OBJECTS)
 larkd_LDADD = $(LDADD)
 larkd_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(larkd_CXXFLAGS) $(CXXFLAGS) \
+	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(larkd_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I. -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -94,15 +75,6 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
 SOURCES = $(larkd_SOURCES)
 DIST_SOURCES = $(larkd_SOURCES)
 ETAGS = etags
@@ -115,8 +87,11 @@ AUTOCONF = ${SHELL} /Users/bran/projects/lark/missing --run autoconf
 AUTOHEADER = ${SHELL} /Users/bran/projects/lark/missing --run autoheader
 AUTOMAKE = ${SHELL} /Users/bran/projects/lark/missing --run automake-1.10
 AWK = gawk
-BOOST_CPPFLAGS = -I/usr/local/include/boost-1_38
+BOOST_CPPFLAGS = -pthread -I/usr/local/include/boost-1_38
+BOOST_FILESYSTEM_LIB = -lboost_filesystem-xgcc40-mt-1_38
 BOOST_LDFLAGS = -L/usr/local/lib
+BOOST_SYSTEM_LIB = -lboost_system-xgcc40-mt-1_38
+BOOST_THREAD_LIB = -lboost_thread-xgcc40-mt-1_38
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
@@ -148,7 +123,7 @@ INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LD = /usr/libexec/gcc/i686-apple-darwin9/4.0.1/ld
 LDFLAGS = 
 LIBOBJS = 
-LIBS = -lz -lthrift -lsqlite3 -lm 
+LIBS = -lz -lm 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = lipo
 LN_S = ln -s
@@ -173,7 +148,15 @@ RANLIB = ranlib
 SED = /usr/bin/sed
 SET_MAKE = 
 SHELL = /bin/sh
+SQLITE3_CFLAGS = -I/opt/local/include  
+SQLITE3_LIBS = -L/opt/local/lib -lsqlite3  
 STRIP = strip
+TAG_CFLAGS = -I/opt/local/include/taglib  
+TAG_LIBS = -L/opt/local/lib -ltag  
+THRIFT_CFLAGS = -I/usr/local/include/thrift  
+THRIFT_LIBS = -L/usr/local/lib -lthrift  
+UUID_CFLAGS = -I/opt/local/include  
+UUID_LIBS = -L/opt/local/lib -luuid  
 VERSION = 1.0
 abs_builddir = /Users/bran/projects/lark/cpp
 abs_srcdir = /Users/bran/projects/lark/cpp
@@ -217,7 +200,7 @@ mandir = ${datarootdir}/man
 mkdir_p = /opt/local/bin/gmkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /usr/local
+prefix = /Users/bran/larkinst
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -228,10 +211,9 @@ target_alias =
 top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
-larkd_CXXFLAGS = -Wall -I$(srcdir)/src $(BOOST_CPPFLAGS)
-larkd_LDFLAGS = -Wall $(BOOST_LDFLAGS)
-larkd_OBJDIR = obj
-larkd_SOURCES = larkd.cpp larkd.h larkd.cpp gen/lark_types.cpp gen/lark_constants.cpp gen/LarkService.cpp lark_service_handler.cpp player.cpp indexer.cpp 
+larkd_CPPFLAGS = -Wall -I$(srcdir)/src $(BOOST_CPPFLAGS) $(THRIFT_CFLAGS) $(TAG_CFLAGS) $(GSTREAMER_CFLAGS) $(UUID_CFLAGS) $(SQLITE3_CFLAGS) $(UUID_CFLAGS)
+larkd_LDFLAGS = -Wall $(BOOST_LDFLAGS) $(THRIFT_LIBS) $(TAG_LIBS) $(GSTREAMER_LIBS) $(SQLITE3_LIBS) $(UUID_LIBS) $(BOOST_THREAD_LIB) $(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB)
+larkd_SOURCES = larkd.cpp gen/lark_types.cpp gen/lark_constants.cpp gen/LarkService.cpp lark_service_handler.cpp player.cpp indexer.cpp 
 all: all-am
 
 .SUFFIXES:
@@ -333,102 +315,102 @@ include ./$(DEPDIR)/larkd-player.Po
 #	$(LTCXXCOMPILE) -c -o $@ $<
 
 larkd-larkd.o: larkd.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-larkd.o -MD -MP -MF $(DEPDIR)/larkd-larkd.Tpo -c -o larkd-larkd.o `test -f 'larkd.cpp' || echo '$(srcdir)/'`larkd.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-larkd.o -MD -MP -MF $(DEPDIR)/larkd-larkd.Tpo -c -o larkd-larkd.o `test -f 'larkd.cpp' || echo '$(srcdir)/'`larkd.cpp
 	mv -f $(DEPDIR)/larkd-larkd.Tpo $(DEPDIR)/larkd-larkd.Po
 #	source='larkd.cpp' object='larkd-larkd.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-larkd.o `test -f 'larkd.cpp' || echo '$(srcdir)/'`larkd.cpp
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-larkd.o `test -f 'larkd.cpp' || echo '$(srcdir)/'`larkd.cpp
 
 larkd-larkd.obj: larkd.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-larkd.obj -MD -MP -MF $(DEPDIR)/larkd-larkd.Tpo -c -o larkd-larkd.obj `if test -f 'larkd.cpp'; then $(CYGPATH_W) 'larkd.cpp'; else $(CYGPATH_W) '$(srcdir)/larkd.cpp'; fi`
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-larkd.obj -MD -MP -MF $(DEPDIR)/larkd-larkd.Tpo -c -o larkd-larkd.obj `if test -f 'larkd.cpp'; then $(CYGPATH_W) 'larkd.cpp'; else $(CYGPATH_W) '$(srcdir)/larkd.cpp'; fi`
 	mv -f $(DEPDIR)/larkd-larkd.Tpo $(DEPDIR)/larkd-larkd.Po
 #	source='larkd.cpp' object='larkd-larkd.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-larkd.obj `if test -f 'larkd.cpp'; then $(CYGPATH_W) 'larkd.cpp'; else $(CYGPATH_W) '$(srcdir)/larkd.cpp'; fi`
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-larkd.obj `if test -f 'larkd.cpp'; then $(CYGPATH_W) 'larkd.cpp'; else $(CYGPATH_W) '$(srcdir)/larkd.cpp'; fi`
 
 larkd-lark_types.o: gen/lark_types.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_types.o -MD -MP -MF $(DEPDIR)/larkd-lark_types.Tpo -c -o larkd-lark_types.o `test -f 'gen/lark_types.cpp' || echo '$(srcdir)/'`gen/lark_types.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_types.o -MD -MP -MF $(DEPDIR)/larkd-lark_types.Tpo -c -o larkd-lark_types.o `test -f 'gen/lark_types.cpp' || echo '$(srcdir)/'`gen/lark_types.cpp
 	mv -f $(DEPDIR)/larkd-lark_types.Tpo $(DEPDIR)/larkd-lark_types.Po
 #	source='gen/lark_types.cpp' object='larkd-lark_types.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_types.o `test -f 'gen/lark_types.cpp' || echo '$(srcdir)/'`gen/lark_types.cpp
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_types.o `test -f 'gen/lark_types.cpp' || echo '$(srcdir)/'`gen/lark_types.cpp
 
 larkd-lark_types.obj: gen/lark_types.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_types.obj -MD -MP -MF $(DEPDIR)/larkd-lark_types.Tpo -c -o larkd-lark_types.obj `if test -f 'gen/lark_types.cpp'; then $(CYGPATH_W) 'gen/lark_types.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/lark_types.cpp'; fi`
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_types.obj -MD -MP -MF $(DEPDIR)/larkd-lark_types.Tpo -c -o larkd-lark_types.obj `if test -f 'gen/lark_types.cpp'; then $(CYGPATH_W) 'gen/lark_types.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/lark_types.cpp'; fi`
 	mv -f $(DEPDIR)/larkd-lark_types.Tpo $(DEPDIR)/larkd-lark_types.Po
 #	source='gen/lark_types.cpp' object='larkd-lark_types.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_types.obj `if test -f 'gen/lark_types.cpp'; then $(CYGPATH_W) 'gen/lark_types.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/lark_types.cpp'; fi`
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_types.obj `if test -f 'gen/lark_types.cpp'; then $(CYGPATH_W) 'gen/lark_types.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/lark_types.cpp'; fi`
 
 larkd-lark_constants.o: gen/lark_constants.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_constants.o -MD -MP -MF $(DEPDIR)/larkd-lark_constants.Tpo -c -o larkd-lark_constants.o `test -f 'gen/lark_constants.cpp' || echo '$(srcdir)/'`gen/lark_constants.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_constants.o -MD -MP -MF $(DEPDIR)/larkd-lark_constants.Tpo -c -o larkd-lark_constants.o `test -f 'gen/lark_constants.cpp' || echo '$(srcdir)/'`gen/lark_constants.cpp
 	mv -f $(DEPDIR)/larkd-lark_constants.Tpo $(DEPDIR)/larkd-lark_constants.Po
 #	source='gen/lark_constants.cpp' object='larkd-lark_constants.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_constants.o `test -f 'gen/lark_constants.cpp' || echo '$(srcdir)/'`gen/lark_constants.cpp
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_constants.o `test -f 'gen/lark_constants.cpp' || echo '$(srcdir)/'`gen/lark_constants.cpp
 
 larkd-lark_constants.obj: gen/lark_constants.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_constants.obj -MD -MP -MF $(DEPDIR)/larkd-lark_constants.Tpo -c -o larkd-lark_constants.obj `if test -f 'gen/lark_constants.cpp'; then $(CYGPATH_W) 'gen/lark_constants.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/lark_constants.cpp'; fi`
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_constants.obj -MD -MP -MF $(DEPDIR)/larkd-lark_constants.Tpo -c -o larkd-lark_constants.obj `if test -f 'gen/lark_constants.cpp'; then $(CYGPATH_W) 'gen/lark_constants.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/lark_constants.cpp'; fi`
 	mv -f $(DEPDIR)/larkd-lark_constants.Tpo $(DEPDIR)/larkd-lark_constants.Po
 #	source='gen/lark_constants.cpp' object='larkd-lark_constants.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_constants.obj `if test -f 'gen/lark_constants.cpp'; then $(CYGPATH_W) 'gen/lark_constants.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/lark_constants.cpp'; fi`
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_constants.obj `if test -f 'gen/lark_constants.cpp'; then $(CYGPATH_W) 'gen/lark_constants.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/lark_constants.cpp'; fi`
 
 larkd-LarkService.o: gen/LarkService.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-LarkService.o -MD -MP -MF $(DEPDIR)/larkd-LarkService.Tpo -c -o larkd-LarkService.o `test -f 'gen/LarkService.cpp' || echo '$(srcdir)/'`gen/LarkService.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-LarkService.o -MD -MP -MF $(DEPDIR)/larkd-LarkService.Tpo -c -o larkd-LarkService.o `test -f 'gen/LarkService.cpp' || echo '$(srcdir)/'`gen/LarkService.cpp
 	mv -f $(DEPDIR)/larkd-LarkService.Tpo $(DEPDIR)/larkd-LarkService.Po
 #	source='gen/LarkService.cpp' object='larkd-LarkService.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-LarkService.o `test -f 'gen/LarkService.cpp' || echo '$(srcdir)/'`gen/LarkService.cpp
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-LarkService.o `test -f 'gen/LarkService.cpp' || echo '$(srcdir)/'`gen/LarkService.cpp
 
 larkd-LarkService.obj: gen/LarkService.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-LarkService.obj -MD -MP -MF $(DEPDIR)/larkd-LarkService.Tpo -c -o larkd-LarkService.obj `if test -f 'gen/LarkService.cpp'; then $(CYGPATH_W) 'gen/LarkService.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/LarkService.cpp'; fi`
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-LarkService.obj -MD -MP -MF $(DEPDIR)/larkd-LarkService.Tpo -c -o larkd-LarkService.obj `if test -f 'gen/LarkService.cpp'; then $(CYGPATH_W) 'gen/LarkService.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/LarkService.cpp'; fi`
 	mv -f $(DEPDIR)/larkd-LarkService.Tpo $(DEPDIR)/larkd-LarkService.Po
 #	source='gen/LarkService.cpp' object='larkd-LarkService.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-LarkService.obj `if test -f 'gen/LarkService.cpp'; then $(CYGPATH_W) 'gen/LarkService.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/LarkService.cpp'; fi`
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-LarkService.obj `if test -f 'gen/LarkService.cpp'; then $(CYGPATH_W) 'gen/LarkService.cpp'; else $(CYGPATH_W) '$(srcdir)/gen/LarkService.cpp'; fi`
 
 larkd-lark_service_handler.o: lark_service_handler.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_service_handler.o -MD -MP -MF $(DEPDIR)/larkd-lark_service_handler.Tpo -c -o larkd-lark_service_handler.o `test -f 'lark_service_handler.cpp' || echo '$(srcdir)/'`lark_service_handler.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_service_handler.o -MD -MP -MF $(DEPDIR)/larkd-lark_service_handler.Tpo -c -o larkd-lark_service_handler.o `test -f 'lark_service_handler.cpp' || echo '$(srcdir)/'`lark_service_handler.cpp
 	mv -f $(DEPDIR)/larkd-lark_service_handler.Tpo $(DEPDIR)/larkd-lark_service_handler.Po
 #	source='lark_service_handler.cpp' object='larkd-lark_service_handler.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_service_handler.o `test -f 'lark_service_handler.cpp' || echo '$(srcdir)/'`lark_service_handler.cpp
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_service_handler.o `test -f 'lark_service_handler.cpp' || echo '$(srcdir)/'`lark_service_handler.cpp
 
 larkd-lark_service_handler.obj: lark_service_handler.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_service_handler.obj -MD -MP -MF $(DEPDIR)/larkd-lark_service_handler.Tpo -c -o larkd-lark_service_handler.obj `if test -f 'lark_service_handler.cpp'; then $(CYGPATH_W) 'lark_service_handler.cpp'; else $(CYGPATH_W) '$(srcdir)/lark_service_handler.cpp'; fi`
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-lark_service_handler.obj -MD -MP -MF $(DEPDIR)/larkd-lark_service_handler.Tpo -c -o larkd-lark_service_handler.obj `if test -f 'lark_service_handler.cpp'; then $(CYGPATH_W) 'lark_service_handler.cpp'; else $(CYGPATH_W) '$(srcdir)/lark_service_handler.cpp'; fi`
 	mv -f $(DEPDIR)/larkd-lark_service_handler.Tpo $(DEPDIR)/larkd-lark_service_handler.Po
 #	source='lark_service_handler.cpp' object='larkd-lark_service_handler.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_service_handler.obj `if test -f 'lark_service_handler.cpp'; then $(CYGPATH_W) 'lark_service_handler.cpp'; else $(CYGPATH_W) '$(srcdir)/lark_service_handler.cpp'; fi`
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-lark_service_handler.obj `if test -f 'lark_service_handler.cpp'; then $(CYGPATH_W) 'lark_service_handler.cpp'; else $(CYGPATH_W) '$(srcdir)/lark_service_handler.cpp'; fi`
 
 larkd-player.o: player.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-player.o -MD -MP -MF $(DEPDIR)/larkd-player.Tpo -c -o larkd-player.o `test -f 'player.cpp' || echo '$(srcdir)/'`player.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-player.o -MD -MP -MF $(DEPDIR)/larkd-player.Tpo -c -o larkd-player.o `test -f 'player.cpp' || echo '$(srcdir)/'`player.cpp
 	mv -f $(DEPDIR)/larkd-player.Tpo $(DEPDIR)/larkd-player.Po
 #	source='player.cpp' object='larkd-player.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-player.o `test -f 'player.cpp' || echo '$(srcdir)/'`player.cpp
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-player.o `test -f 'player.cpp' || echo '$(srcdir)/'`player.cpp
 
 larkd-player.obj: player.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-player.obj -MD -MP -MF $(DEPDIR)/larkd-player.Tpo -c -o larkd-player.obj `if test -f 'player.cpp'; then $(CYGPATH_W) 'player.cpp'; else $(CYGPATH_W) '$(srcdir)/player.cpp'; fi`
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-player.obj -MD -MP -MF $(DEPDIR)/larkd-player.Tpo -c -o larkd-player.obj `if test -f 'player.cpp'; then $(CYGPATH_W) 'player.cpp'; else $(CYGPATH_W) '$(srcdir)/player.cpp'; fi`
 	mv -f $(DEPDIR)/larkd-player.Tpo $(DEPDIR)/larkd-player.Po
 #	source='player.cpp' object='larkd-player.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-player.obj `if test -f 'player.cpp'; then $(CYGPATH_W) 'player.cpp'; else $(CYGPATH_W) '$(srcdir)/player.cpp'; fi`
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-player.obj `if test -f 'player.cpp'; then $(CYGPATH_W) 'player.cpp'; else $(CYGPATH_W) '$(srcdir)/player.cpp'; fi`
 
 larkd-indexer.o: indexer.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-indexer.o -MD -MP -MF $(DEPDIR)/larkd-indexer.Tpo -c -o larkd-indexer.o `test -f 'indexer.cpp' || echo '$(srcdir)/'`indexer.cpp
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-indexer.o -MD -MP -MF $(DEPDIR)/larkd-indexer.Tpo -c -o larkd-indexer.o `test -f 'indexer.cpp' || echo '$(srcdir)/'`indexer.cpp
 	mv -f $(DEPDIR)/larkd-indexer.Tpo $(DEPDIR)/larkd-indexer.Po
 #	source='indexer.cpp' object='larkd-indexer.o' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-indexer.o `test -f 'indexer.cpp' || echo '$(srcdir)/'`indexer.cpp
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-indexer.o `test -f 'indexer.cpp' || echo '$(srcdir)/'`indexer.cpp
 
 larkd-indexer.obj: indexer.cpp
-	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -MT larkd-indexer.obj -MD -MP -MF $(DEPDIR)/larkd-indexer.Tpo -c -o larkd-indexer.obj `if test -f 'indexer.cpp'; then $(CYGPATH_W) 'indexer.cpp'; else $(CYGPATH_W) '$(srcdir)/indexer.cpp'; fi`
+	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT larkd-indexer.obj -MD -MP -MF $(DEPDIR)/larkd-indexer.Tpo -c -o larkd-indexer.obj `if test -f 'indexer.cpp'; then $(CYGPATH_W) 'indexer.cpp'; else $(CYGPATH_W) '$(srcdir)/indexer.cpp'; fi`
 	mv -f $(DEPDIR)/larkd-indexer.Tpo $(DEPDIR)/larkd-indexer.Po
 #	source='indexer.cpp' object='larkd-indexer.obj' libtool=no \
 #	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(larkd_CXXFLAGS) $(CXXFLAGS) -c -o larkd-indexer.obj `if test -f 'indexer.cpp'; then $(CYGPATH_W) 'indexer.cpp'; else $(CYGPATH_W) '$(srcdir)/indexer.cpp'; fi`
+#	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(larkd_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o larkd-indexer.obj `if test -f 'indexer.cpp'; then $(CYGPATH_W) 'indexer.cpp'; else $(CYGPATH_W) '$(srcdir)/indexer.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

@@ -1,28 +1,8 @@
-#CPPFLAGS = -L/opt/local/lib \
-#		   -L/usr/local/lib \
-#		   -I/usr/local/include/boost-1_38 \
-#		   -I/opt/local/include/taglib \
-#		   -I/opt/local/include/libavcodec \
-#		   -I/opt/local/include/libavformat \
-#		   -I/usr/local/include \
-#		   -I/opt/local/include \
-#		   -lboost_system-xgcc40-mt-1_38 \
-#		   -lboost_filesystem-xgcc40-mt-1_38 \
-#		   -lsqlite3 \
-#		   -luuid \
-#		   -ltag \
-#		   -lz \
-#		   -lm \
-#		   $(shell pkg-config --libs --cflags gstreamer-0.10) \
-#		   $(shell PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/usr/local/lib/pkgconfig pkg-config --libs --cflags gstreamer-0.10 thrift) \
-#		   -lavutil -lavcodec -lavformat
-#
-#all: gen larkd
 
 bin_PROGRAMS=larkd
-larkd_CXXFLAGS = -Wall -I$(srcdir)/src $(BOOST_CPPFLAGS)
-larkd_LDFLAGS = -Wall $(BOOST_LDFLAGS)
-larkd_SOURCES=larkd.cpp larkd.h larkd.cpp gen/lark_types.cpp gen/lark_constants.cpp gen/LarkService.cpp lark_service_handler.cpp player.cpp indexer.cpp 
+larkd_CPPFLAGS = -Wall -I$(srcdir)/src $(BOOST_CPPFLAGS) $(THRIFT_CFLAGS) $(TAG_CFLAGS) $(GSTREAMER_CFLAGS) $(UUID_CFLAGS) $(SQLITE3_CFLAGS) $(UUID_CFLAGS)
+larkd_LDFLAGS = -Wall $(BOOST_LDFLAGS) $(THRIFT_LIBS) $(TAG_LIBS) $(GSTREAMER_LIBS) $(SQLITE3_LIBS) $(UUID_LIBS) $(BOOST_THREAD_LIB) $(BOOST_SYSTEM_LIB) $(BOOST_FILESYSTEM_LIB)
+larkd_SOURCES=larkd.cpp gen/lark_types.cpp gen/lark_constants.cpp gen/LarkService.cpp lark_service_handler.cpp player.cpp indexer.cpp 
 
 #gen:
 #	rm -rf gen-cpp
