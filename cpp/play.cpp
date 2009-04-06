@@ -86,7 +86,6 @@ int main (int   argc,
 
 	/* now run */
 	g_main_loop_run (loop);
-
 	/* also clean up */
 	gst_element_set_state (play, GST_STATE_NULL);
 	gst_object_unref (GST_OBJECT (play));

@@ -22,6 +22,7 @@
 #include <transport/TServerSocket.h>
 #include <transport/TBufferTransports.h>
 #include "indexer.h"
+#include "player.h"
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -40,6 +41,7 @@ class LarkServiceHandler : virtual public LarkServiceIf {
   LarkServiceHandler() {
     // Your initialization goes here
 	indexer.reset(new Indexer("songs.db"));	
+	player.reset(new Player());
   }
 
   void ping() {
@@ -70,6 +72,7 @@ class LarkServiceHandler : virtual public LarkServiceIf {
 
   void playURL(const string & url) {
 	  cout << "play url:" << url << endl;
+	  player->playURL(url);
   }
 
   void move(const int32_t position, const std::vector<UUID> & fileIDs) {
@@ -89,6 +92,7 @@ class LarkServiceHandler : virtual public LarkServiceIf {
 
  private:
   shared_ptr<Indexer> indexer;
+  shared_ptr<Player> player;
 
 };
 

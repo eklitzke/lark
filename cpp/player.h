@@ -6,6 +6,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/thread.hpp>
+#include <gst/gst.h>
+#include <glib.h>
 
 #include "gen/lark_types.h"
 
@@ -21,9 +23,13 @@ namespace lark {
 			Player();
 			virtual ~Player();
 			virtual void playURL(const string & url);
+			void eventLoop();
 		private:
-			shared_ptr<lark::File> *currentSong;
+			GstElement *playElement;
+			GMainLoop *loop;
+			shared_ptr<thread> eventThread;
 	};
+
 }
 
 #endif
