@@ -23,7 +23,9 @@ namespace lark {
 			Player();
 			virtual ~Player();
 			virtual void playURL(const string & url);
-			void eventLoop();
+			virtual void eventLoop();
+			virtual gboolean busEvent(GstBus *bus, GstMessage *msg);
+
 		private:
 			GstElement *playElement;
 			GMainLoop *loop;

@@ -36,7 +36,7 @@ enum PlayState {
 }
 
 service LarkService {
-  void ping(),
+  string ping(),
   // database
   oneway void scan(string filesystem_path),
   oneway void remove(list<UUID> song_ids),

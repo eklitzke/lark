@@ -44,9 +44,10 @@ class LarkServiceHandler : virtual public LarkServiceIf {
 	player.reset(new Player());
   }
 
-  void ping() {
+  void ping(std::string & _result) {
     // Your implementation goes here
     printf("ping\n");
+	_result = "pong";
   }
 
   void scan(const std::string& filesystem_path) {
@@ -80,9 +81,10 @@ class LarkServiceHandler : virtual public LarkServiceIf {
     printf("move\n");
   }
 
-  void listFiles(std::vector<File> & _return) {
+  void listFiles(std::vector<lark::File> & _return) {
     // Your implementation goes here
     printf("listSongs\n");
+	indexer->listFiles(_return);	
   }
 
   void listPlaylists(std::vector<Playlist> & _return) {

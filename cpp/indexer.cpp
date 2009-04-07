@@ -1,4 +1,5 @@
 #include "indexer.h"
+namespace lark {
 
 static const string ARTIST = "artist";
 static const string ALBUM = "album";
@@ -16,7 +17,8 @@ void print_usage(const char *name) {
 
 Indexer::~Indexer() {
 	if (this->db != NULL) {
-		int result_code = sqlite3_close(this->db);
+		//int result_code = 
+		sqlite3_close(this->db);
 		this->db = NULL;
 	}
 }
@@ -26,6 +28,56 @@ Indexer::Indexer(const string & database_path) {
 	this->check_sqlite3_result(sqlite3_open(database_path.c_str(), &this->db));
 	this->init_db();
 };
+
+void Indexer::listFiles(vector<File> & _return) {
+	sqlite3_stmt *select_statement = NULL;
+	string query = "select s.id, s.path, sf.field, sf.value from song s, song_field sf where sf.song_id = s.id order by s.id asc";
+	this->check_sqlite3_result(sqlite3_prepare(this->db, query.c_str(), -1, &select_statement, NULL));
+	int num = 0;
+
+	std::string lastID = "";
+	lark::File *a_file = NULL;
+	while (true) {
+		int result_code = this->check_sqlite3_result(sqlite3_step(select_statement));
+		if (result_code == SQLITE_ROW) {
+			std::string id = (const char *)sqlite3_column_text(select_statement, 0);
+			std::string filePath = (const char *)sqlite3_column_text(select_statement, 1);
+			std::string fieldName = (const char *)sqlite3_column_text(select_statement, 2);
+			std::string fieldValue = (const char *)sqlite3_column_text(select_statement, 3);
+
+			if (id != lastID) {
+				if (a_file != NULL) {
+					_return.push_back(*a_file);
+					delete a_file; 
+					a_file = NULL;
+				}
+				a_file = new lark::File();
+				a_file->id = id;
+				a_file->fileSystemPath = filePath;
+				lastID = id;
+			}
+			if (fieldName == ARTIST) 
+				a_file->artist = fieldValue;
+			else if (fieldName == ALBUM) 
+				a_file->album = fieldValue;
+			else if (fieldName == TITLE) 
+				a_file->title = fieldValue;
+			else if (fieldName == GENRE) 
+				a_file->genre = fieldValue;
+			else if (fieldName == YEAR) 
+				a_file->year = fieldValue;
+			else if (fieldName == TRACK) 
+				a_file->track = fieldValue;
+		} else if (result_code == SQLITE_DONE) {
+			this->check_sqlite3_result(sqlite3_finalize(select_statement));
+			break;
+		}
+	}
+	if (a_file != NULL) {
+		_return.push_back(*a_file);
+		delete a_file; 
+	}
+}
 
 bool Indexer::path_exists(const string & path) { 
 	sqlite3_stmt *select_statement = NULL;
@@ -142,4 +194,5 @@ void Indexer::insertField(const string & songID, const string & field, const str
 	this->check_sqlite3_result(sqlite3_finalize(insert_statement));
 }
 
+}
 

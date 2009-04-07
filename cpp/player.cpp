@@ -1,15 +1,15 @@
-#include <iostream>
-
 #include "player.h"
 
 namespace lark {
-	
 	gboolean bus_call (GstBus *bus, GstMessage *msg, gpointer data) {
-		GMainLoop *loop = (GMainLoop *) data;
+		Player *player = (Player *)data;
+		return player->busEvent(bus, msg);
+	}
+
+	gboolean Player::busEvent(GstBus *bus, GstMessage *msg) {
 		switch (GST_MESSAGE_TYPE (msg)) {
 			case GST_MESSAGE_EOS:
 				g_print ("End of stream\n");
-				g_main_loop_quit (loop);
 				break;
 			case GST_MESSAGE_WARNING: 
 				{
@@ -41,8 +41,6 @@ namespace lark {
 
 					g_printerr ("Error: %s\n", error->message);
 					g_error_free (error);
-
-					g_main_loop_quit (loop);
 					break;
 				}
 			default:
@@ -67,7 +65,7 @@ namespace lark {
 		loop = g_main_loop_new(NULL, FALSE);
 		playElement = gst_element_factory_make("playbin", "play");
 		bus = gst_pipeline_get_bus(GST_PIPELINE(playElement));
-		gst_bus_add_watch(bus, bus_call, loop);
+		gst_bus_add_watch(bus, bus_call, this);
 		/* now run */
 		cout << "g main loop run" << endl;
 		g_main_loop_run (loop);

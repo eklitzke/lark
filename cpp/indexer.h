@@ -16,8 +16,12 @@
 #include <boost/lexical_cast.hpp>
 #include <sqlite3.h>
 
+#include "gen/lark_types.h"
+
 #ifndef INDEXER_H
 #define INDEXER_H
+namespace lark {
+
 using namespace std;
 using namespace boost;
 
@@ -42,6 +46,7 @@ class Indexer {
 		Indexer(const string & database_path);
 		virtual ~Indexer();
 		virtual void scan(const string &path);
+		virtual void listFiles(std::vector <lark::File> & _return); 
 	protected:
 		virtual void insert(const string & songID, const string & path);
 		virtual void init_db();
@@ -52,6 +57,6 @@ class Indexer {
 		sqlite3 *db;
 	
 };
-
+}
 #endif
 
