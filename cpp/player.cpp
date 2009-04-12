@@ -67,10 +67,8 @@ namespace lark {
 		bus = gst_pipeline_get_bus(GST_PIPELINE(playElement));
 		gst_bus_add_watch(bus, bus_call, this);
 		/* now run */
-		cout << "g main loop run" << endl;
 		g_main_loop_run (loop);
 		/* also clean up */
-		cout << "g main loop run done" << endl;
 	};
 
 	Player::~Player() {
@@ -78,7 +76,7 @@ namespace lark {
 		gst_object_unref(GST_OBJECT (playElement));
 	};
 
-	void Player::playURL(const string & uri) { 
+	void Player::playURL(const string & uri) {
 		gst_element_set_state (playElement, GST_STATE_NULL);
 		g_object_set(G_OBJECT(playElement), "uri", uri.c_str(), NULL);
 		gst_element_set_state(playElement, GST_STATE_PLAYING);

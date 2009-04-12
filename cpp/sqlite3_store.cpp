@@ -91,7 +91,7 @@ namespace lark {
 	}
 	void PlaylistStore::initialize() {
 		this->db()->execute("create table if not exists playlist (id text primary key collate nocase, name text default '' collate nocase) ");
-		this->db()->execute("create table if not exists playlist_file (id integer primary key, int position not null, file_id text collate nocase not null, playlist_id text collate nocase not null)");
+		this->db()->execute("create table if not exists playlist_file (id integer primary key, position integer not null, file_id text collate nocase not null, playlist_id text collate nocase not null)");
 		this->db()->execute("create index if not exists playlist_file_playlist_id_idx ON playlist_file(playlist_id)");
 		this->db()->execute("create index if not exists playlist_file_file_id_idx ON playlist_file(file_id)");
 	}
@@ -109,10 +109,20 @@ namespace lark {
 	}
 
 	void PlaylistStore::add(const UUID& playlistID, const vector<UUID> & fileIDs) {
-		for (unsigned int i = 0; i < fileIDs.size(); i++) {
+		for	(unsigned int i = 0; i < fileIDs.size(); i++) {
+
+			int max_id = 0;
+
+			string q = "select max(position) + 1 from playlist_file where playlist_id = ?";
+			vector<string> b;
+			b.push_back(playlistID);
+			shared_ptr<Rows> res = this->db()->execute(q, b);
+			string num = (*res)[0][0];
+
 			UUID fileID = fileIDs[i];
-			string query = "insert into playlist (id, name) values (?, ?)";
+			string query = "insert into playlist_file (position, playlist_id, file_id) values (?, ?, ?)";
 			vector<string> bind;
+			bind.push_back(num);
 			bind.push_back(playlistID);
 			bind.push_back(fileID);
 			this->db()->execute(query, bind);

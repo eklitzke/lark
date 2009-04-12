@@ -95,7 +95,7 @@ namespace lark {
 	class FileStore : public Model {
 		public:
 			FileStore() : Model() { };
-			//~FileStore() {}
+			~FileStore() {}
 			virtual void scan(const string &path);
 			virtual shared_ptr<Files> list(const FileQuery& fileQuery);
 			virtual void addField(const UUID& fileID, const string& field, const string& value);

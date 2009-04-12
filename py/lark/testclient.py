@@ -29,7 +29,10 @@ client = LarkService.Client(protocol)
 transport.open()
 file_query = FileQuery()
 file_query.binaryTerms = [BinaryTerm("artist", TermOperator.like, "Abe Vigoda")]
-pprint.pprint(client.listFiles(file_query))
+files = client.listFiles(file_query)
+pprint.pprint(files)
 
-#playlist_id = client.createPlaylist("punk songs")
+playlist_id = client.createPlaylist("punk songs")
+for afile in files:
+	client.addToPlaylist(playlist_id, [afile.id])
 
