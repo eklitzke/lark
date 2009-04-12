@@ -50,9 +50,9 @@ namespace lark {
 		return TRUE;
 	};
 
-
-	Player::Player() { 
-		eventThread.reset(new boost::thread(&Player::eventLoop, this));
+	Player::Player(shared_ptr<SQLite3Store> dataStore) { 
+		dataStore_ = dataStore;
+		eventThread_.reset(new thread (&Player::eventLoop, this));
 	};
 
 	void Player::eventLoop() {
@@ -83,7 +83,9 @@ namespace lark {
 		g_object_set(G_OBJECT(playElement), "uri", uri.c_str(), NULL);
 		gst_element_set_state(playElement, GST_STATE_PLAYING);
 	};
+	void Player::playByQuery(const FileQuery & query) {
 
+	}
 }
 
 
