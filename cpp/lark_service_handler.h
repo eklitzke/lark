@@ -38,7 +38,9 @@ class LarkServiceHandler : virtual public LarkServiceIf {
  public:
   void setPlayer(shared_ptr<Player> player) {
 	  player_ = player;
+	  player_->start();
   } 
+
   void setDataStore(shared_ptr<SQLite3Store> dataStore) {
 	  dataStore_ = dataStore;
 	  shared_ptr<Player> player(new Player(dataStore));
@@ -50,83 +52,40 @@ class LarkServiceHandler : virtual public LarkServiceIf {
   };
 
   void ping(std::string & _result) {
-    // Your implementation goes here
-    printf("ping\n");
 	_result = "pong";
   }
 
   void scan(const std::string& filesystem_path) {
-    // Your implementation goes here
-    printf("scan\n");
 	dataStore_->file_store()->scan(filesystem_path); 
   }
 
   void remove(const std::vector<UUID> & file_ids) {
-    // Your implementation goes here
-    printf("remove\n");
   }
 
-  void setState(const PlayState newState) {
-    // Your implementation goes here
-    printf("setState\n");
+  virtual void setStatus(const Status & newState) {
+	  player_->setStatus(newState);
   }
 
-  void play(const UUID& file_id) {
-    // Your implementation goes here
-    printf("play\n");
+  virtual void status(Status & _return) {
+	_return = *player_->status();
   }
 
-  void playURL(const string & url) {
-	  cout << "play url:" << url << endl;
-	  player_->playURL(url);
+  virtual void setPlaylist(const Files & files) {
+	  player_->setPlaylist(files);
+  }
+	
+  virtual void playlist(Files & _return) { 
+	   _return = *player_->playlist();
   }
 
-  void playByQuery(const FileQuery & query)  {
-	  player_->playByQuery(query);
-  }
-
-  void move(const std::vector<UUID> & fileIDs, const int32_t position) {
-    // Your implementation goes here
-    printf("move\n");
+  void enqueueByQuery(const FileQuery & query)  {
+	  player_->enqueueByQuery(query);
   }
 
   void listFiles(vector<lark::File> & _return, const FileQuery & query) {
-    // Your implementation goes here
-    printf("listFiles\n");
 	_return = *(dataStore_->file_store()->list(query));	
   }
 
-  void listPlaylists(std::vector<UUID> & _return) {
-    // Your implementation goes here
-    printf("listPlaylists\n");
-  }
-
-  void createPlaylist(UUID& _return, const std::string& name) {
-    // Your implementation goes here
-    printf("createPlaylist\n");
-	_return = *dataStore_->playlist_store()->create(name);
-  }
-
-  void playlistInfo(Playlist& _return, const UUID& playlistID) {
-    // Your implementation goes here
-    printf("playlistInfo\n");
-  }
-
-  void addToPlaylist(const UUID& playlistID, const std::vector<UUID> & songIDs) {
-    // Your implementation goes here
-    printf("addToPlaylist\n");
-	dataStore_->playlist_store()->add(playlistID, songIDs);
-  }
-
-  void removeFromPlaylist(const UUID& playlistID, const std::vector<UUID> & songIDs) {
-    // Your implementation goes here
-    printf("removeFromPlaylist\n");
-  }
-  void removePlaylist(const UUID& playlistID) {
-    // Your implementation goes here
-    printf("removePlaylist\n");
-	dataStore_->playlist_store()->remove(playlistID);
-  }
 };
 
 #endif

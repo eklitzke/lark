@@ -2,7 +2,8 @@
 namespace py lark.gen
 namespace cpp lark
 
-typedef string UUID 
+typedef string UUID
+//typedef UUID FileID;
 
 struct File { 
 	1:UUID id,
@@ -15,7 +16,8 @@ struct File {
 	8:string title,
 	9:string track,
 	10:string year,
-	11:i64 duration
+	11:i64 duration,
+	12:map<string, string> customFields
 }
 
 enum TermOperator {
@@ -47,35 +49,52 @@ struct Playlist {
 	1: UUID id,
 	2: string name,
 	3: PlaylistType playlist_type,
-	4: list<File> files
+	4: list<File> files,
+	5: i64 position
 }
 
-enum PlayState {
+enum Playback {
 	STOPPED,
 	PLAYING,
 	PAUSED
+}
+
+struct Status { 
+	1: Playback playback,
+	2: i32 position, // the position in the playlist
+	3: i32 playlistGeneration, // whenever the playlist changes, this is incremented
+	4: i32 duration,
+	5: i32 elapsed
 }
 
 service LarkService {
   string ping(),
   // database
   oneway void scan(1:string filesystem_path),
-  oneway void remove(1:list<UUID> file_ids),
+  oneway void remove(1:list<UUID> fileIDs),
+  list<File> listFiles(1:FileQuery query),
+  // not supported yet
+  //void add(1:File),
 
-  // play commands
-  oneway void setState(1:PlayState newState),
-  oneway void playByQuery(1:FileQuery query),
-  oneway void playURL(1:string URL), 
+  // playback commands
+  oneway void enqueueByQuery(1:FileQuery query),
+
+  list<File> playlist(),
+  oneway void setPlaylist(1:list<File> files),
+
+  oneway void setStatus(1:Status newStatus),
+  Status status()
 
   // playlist commands
+  /*
   oneway void move(1:list<UUID> fileIDs, 2:i32 position),
-  list<File> listFiles(1:FileQuery query),
   list<UUID> listPlaylists(), 
   UUID createPlaylist(1:string name),
   Playlist playlistInfo(1:UUID playlistID),
   oneway void addToPlaylist(1:UUID playlistID, 2:list<UUID> songIDs)
   oneway void removeFromPlaylist(1:UUID playlistID, 2:list<UUID> songIDs)
   oneway void removePlaylist(1:UUID playlistID)
+  */
 }
 
 

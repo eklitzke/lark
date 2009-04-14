@@ -29,10 +29,14 @@ client = LarkService.Client(protocol)
 transport.open()
 file_query = FileQuery()
 file_query.binaryTerms = [BinaryTerm("artist", TermOperator.like, "Abe Vigoda")]
-files = client.listFiles(file_query)
-pprint.pprint(files)
+#files = client.listFiles(file_query)
+#pprint.pprint(files)
 
-playlist_id = client.createPlaylist("punk songs")
-for afile in files:
-	client.addToPlaylist(playlist_id, [afile.id])
+print "playing:"
+#client.enqueueByQuery(file_query)
+status = client.status()
+print status:
 
+status.playback = Playback.PLAYING
+status.position = 10
+client.setStatus(status)

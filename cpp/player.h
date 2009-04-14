@@ -21,18 +21,37 @@ using namespace boost;
 namespace lark {
 	class Player { 
 		public:
-			Player(shared_ptr<SQLite3Store> dataStore);
+			Player(shared_ptr<SQLite3Store> dataStore) : dataStore_(dataStore), playlistPosition_(-1), playlistGeneration_(0),
+			playlist_(new Files) { }
 			virtual ~Player();
-			virtual void playURL(const string & url);
-			virtual void playByQuery(const FileQuery & query);
+			virtual void start();
+			/* Play all of the items in a file query. */
+			virtual void enqueueByQuery(const FileQuery & query);
 			virtual void eventLoop();
 			virtual gboolean busEvent(GstBus *bus, GstMessage *msg);
+			virtual shared_ptr<Files> playlist() { 
+				return playlist_; 
+			}
+			virtual void setPlaylist(const Files& files) { 
+				*playlist_ = files; 
+				playlistGeneration_++; 
+			}
+			virtual shared_ptr<Status> status();
+			virtual void setStatus(const Status&);
 		private:
+			virtual void stop();
+			virtual void resume();
+			virtual void pause();
+			virtual void playAt(unsigned int);
+			virtual void playURI(const string & uri);
 			GstElement *playElement;
 			GMainLoop *loop;
 			shared_ptr<thread> eventThread_;
 			shared_ptr<SQLite3Store> dataStore_;
-			shared_ptr<string> currentPlaylistID_;
+			shared_ptr<UUID> currentPlaylistID_;
+			int playlistPosition_;
+			int playlistGeneration_;
+			shared_ptr<Files> playlist_;
 	};
 
 }

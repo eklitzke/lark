@@ -12,12 +12,14 @@ gen/LarkService.h: gen
 gen/LarkService.cpp: gen
 
 gen: ../interfaces/lark.thrift
+	rm -rf gen
 	rm -rf gen-cpp
 	thrift --gen cpp $(srcdir)/../interfaces/lark.thrift
 	mv gen-cpp @builddir@/gen
 
 clean-local:
 	rm -rf @builddir@/gen
+	rm -rf @builddir@/gen-cpp
 
 #clean:
 #	rm -rf gen gen-cpp larkd

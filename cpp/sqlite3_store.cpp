@@ -147,6 +147,20 @@ namespace lark {
 		this->db()->execute(query, bind);
 	}
 
+	shared_ptr<Playlist> PlaylistStore::info(const UUID& playlistID) {
+		string query = "select id, name from playlist where id = ? limit 1";
+		vector<string> bind;
+		bind.push_back(playlistID);
+		shared_ptr<Rows> rows = this->db()->execute(query, bind);
+		shared_ptr<Playlist> playlist;
+		for (unsigned int i =0; i < rows->size(); i++) {
+			Row row = (*rows)[i];
+			playlist.reset(new Playlist);
+			playlist->id = row[0];
+			playlist->name = row[1];
+		}
+		return playlist;
+	}
 	void FileStore::scan(const string & a_path) {
 		if (!fs::exists(a_path)) 
 			return;

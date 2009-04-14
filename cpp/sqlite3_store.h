@@ -113,6 +113,7 @@ namespace lark {
 			virtual shared_ptr<UUID> create(const string& name);
 			virtual void remove(const string& playlistID);
 			virtual void add(const UUID& playlistID, const vector<UUID>& songIDs);
+			virtual shared_ptr<Playlist> info(const UUID& playlistID);
 	};
 
 	class SQLite3Store {
