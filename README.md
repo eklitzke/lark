@@ -14,3 +14,42 @@ See interfaces/lark.thrift for details about the API.   Automatically generated
 Python bindings are in py/.  Additional bindings for the other languages (such
 as Java, Erlang, Ruby, Perl, Haskell) can easily be created by adding additonal
 Makefiles for each (see py/Makefile.am for an example).
+
+Building on Fedora
+------------------
+
+A partial list of dependencies:
+
+* uuid-devel
+* boost-devel
+* thrift (not packaged for fedora)
+* gstreamer-devel
+* sqlite-devel
+
+Fedora has an issue finding Boost from configure scripts, and you need to use
+the --with-boost-* options to get configure to pass, and get things to build.
+    ./configure --with-boost-system=boost_system-mt --with-boost-filesystem=boost_filesystem-mt --with-boost-thread=boost_thread-mt
+
+Fedora doesn't package `uuid.pc`, I had to install uuid myself to get this. If
+you intall it locally make sure you have `PKG_CONFIG_PREFIX` set up correctly
+(you probably need to do this for thrift anyways).
+
+Running:
+    ./cpp/larkd &
+
+Indexing Music
+--------------
+
+Now you need to get the client built, and index some music:
+    pushd py
+    make
+    popd
+    PYTHONPATH=py:$PYTHONPATH python py/lark/gen/LarkService-remote scan /path/to/your/music
+
+This should print `None` to the screen, and the `larkd` instance will start
+printing out information about what files it is indexing.
+
+Playing Music
+-------------
+
+You need to hack up `py/lark/testclient.py` to get music to play.
