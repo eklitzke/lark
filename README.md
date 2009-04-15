@@ -53,3 +53,12 @@ Playing Music
 -------------
 
 You need to hack up `py/lark/testclient.py` to get music to play.
+
+Building Doxygen Documentation
+------------------------------
+
+Lark is set up to use doxygen (although many parts of the code are not yet
+annotated for it). To build doxygen docs, run the following command from the
+root directory (the one that holds the master Makefile):
+    doxygen doc/lark.cfg
+The generated documentation will end up in `doc/html`.
