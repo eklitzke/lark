@@ -43,7 +43,7 @@ namespace lark {
 			virtual void resume();
 			virtual void pause();
 			virtual void playAt(unsigned int);
-			virtual void playURI(const string & uri);
+			virtual void playURI(string uri);
 			GstElement *playElement;
 			GMainLoop *loop;
 			shared_ptr<thread> eventThread_;

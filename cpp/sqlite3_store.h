@@ -1,10 +1,7 @@
 #include <iostream>
-#include <getopt.h>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <tag.h>
-#include <fileref.h>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/lexical_cast.hpp>

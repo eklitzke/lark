@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I ./aclocal
 
-SUBDIRS = cpp 
+SUBDIRS = cpp py
 #py interfaces
 

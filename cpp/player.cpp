@@ -77,7 +77,7 @@ namespace lark {
 		gst_object_unref(GST_OBJECT (playElement));
 	};
 
-	void Player::playURI(const string & uri) {
+	void Player::playURI(string uri) {
 		cout << "playing uri: " << uri << endl;
 		gst_element_set_state (playElement, GST_STATE_NULL);
 		g_object_set(G_OBJECT(playElement), "uri", uri.c_str(), NULL);
@@ -157,8 +157,9 @@ namespace lark {
 		}
 		playlistPosition_ = newPosition;
 		File file = (*playlist_)[playlistPosition_];
-		if (file.uri.size() > 0)
+		if (file.uri.size() > 0) {
 			playURI(file.uri);
+		}
 	}
 
 	shared_ptr<Status> Player::status() {
