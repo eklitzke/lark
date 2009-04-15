@@ -27,7 +27,7 @@ A partial list of dependencies:
 * sqlite-devel
 
 Fedora has an issue finding Boost from configure scripts, and you need to use
-the --with-boost-* options to get configure to pass, and get things to build.
+the `--with-boost-*` options to get configure to pass, and get things to build.
     ./configure --with-boost-system=boost_system-mt --with-boost-filesystem=boost_filesystem-mt --with-boost-thread=boost_thread-mt
 
 Fedora doesn't package `uuid.pc`, I had to install uuid myself to get this. If
