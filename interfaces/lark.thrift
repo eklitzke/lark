@@ -3,11 +3,10 @@ namespace py lark.gen
 namespace cpp lark
 
 typedef string UUID
-//typedef UUID FileID;
 
 struct File { 
 	1:UUID id,
-	2:string fileSystemPath,
+	2:string uri,
 	3:i64 timeModified, // unix timestamp for when this was last modified
 	4:i64 timeAdded, // unix timestamp for when this was last used
 	5:string album,

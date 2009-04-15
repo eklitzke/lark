@@ -4,7 +4,7 @@
 #include "sqlite3_store.h"
 
 namespace lark {
-	static const string PATH = "path";
+	static const string URI = "path";
 	static const string ARTIST = "artist";
 	static const string ALBUM = "album";
 	static const string TITLE = "title";
@@ -13,11 +13,15 @@ namespace lark {
 	static const string YEAR = "year";
 
 	shared_ptr<Files> FileStore::list(const FileQuery & fileQuery) {
-		string query = "SELECT DISTINCT s.id, sf.field, sf.value FROM file s, file_field sf WHERE s.id = sf.file_id AND s.id IN (SELECT s2.id FROM file s2, file_field sf2 where s2.id = sf2.file_id " ;
+		string query = "SELECT sf.file_id, sf.field, sf.value FROM file_field sf WHERE sf.file_id IN (SELECT sf2.file_id FROM file_field sf2 ";
 
 		vector<string> bindFields;
 		for (unsigned int i = 0; i < fileQuery.binaryTerms.size(); i++) {
-			query += " AND ";
+			if (i > 0)
+				query += " AND ";
+			else 
+				query += " WHERE "; 
+
 			BinaryTerm term = fileQuery.binaryTerms[i];
 			if (term.field == "id") {
 				query += " s2.id ";
@@ -41,7 +45,7 @@ namespace lark {
 			query += " ? ";
 			bindFields.push_back(term.value);
 		}
-		query += ") ORDER BY s.id ASC";
+		query += ") ORDER BY sf.file_id ASC";
 		return rowsToFiles(this->db()->execute(query, bindFields));
 	}
 	shared_ptr<Files> FileStore::rowsToFiles(shared_ptr<Rows> theRows) {
@@ -72,8 +76,8 @@ namespace lark {
 				file->year = value;
 			else if (field == TRACK) 
 				file->track = value;
-			else if (field == PATH) 
-				file->fileSystemPath = value;
+			else if (field == URI) 
+				file->uri = value;
 		}
 		if (file.use_count()) {
 			files->push_back(*file);
@@ -84,83 +88,22 @@ namespace lark {
 	bool FileStore::pathExists(const string & path) { 
 		string query = "select * from file_field where field = ? and value = ?";
 		vector<string> bind;
-		bind.push_back(PATH);
+		bind.push_back(URI);
 		bind.push_back(path);
 		shared_ptr<Rows> result = this->db()->execute(query, bind);
 		return result->size() > 0;
 	}
-	void PlaylistStore::initialize() {
-		this->db()->execute("create table if not exists playlist (id text primary key collate nocase, name text default '' collate nocase) ");
-		this->db()->execute("create table if not exists playlist_file (id integer primary key, position integer not null, file_id text collate nocase not null, playlist_id text collate nocase not null)");
-		this->db()->execute("create index if not exists playlist_file_playlist_id_idx ON playlist_file(playlist_id)");
-		this->db()->execute("create index if not exists playlist_file_file_id_idx ON playlist_file(file_id)");
-	}
-
 	void SQLiteDB::initialize() { 
 		this->execute("pragma auto_vacuum = 1");
 		this->execute("pragma encoding = \"UTF-8\"");
 	}
 
 	void FileStore::initialize() { 
-		this->db()->execute("create table if not exists file (id text primary key collate nocase not null) ");
 		this->db()->execute("create table if not exists file_field (id integer primary key not null, file_id text collate nocase, field text collate nocase not null, value text collate nocase not null)");
 		this->db()->execute("create index if not exists file_field_value_idx ON file_field(value)");
 		this->db()->execute("create index if not exists file_field_file_idx ON file_field(file_id)");
 	}
 
-	void PlaylistStore::add(const UUID& playlistID, const vector<UUID> & fileIDs) {
-		for	(unsigned int i = 0; i < fileIDs.size(); i++) {
-
-			int max_id = 0;
-
-			string q = "select max(position) + 1 from playlist_file where playlist_id = ?";
-			vector<string> b;
-			b.push_back(playlistID);
-			shared_ptr<Rows> res = this->db()->execute(q, b);
-			string num = (*res)[0][0];
-
-			UUID fileID = fileIDs[i];
-			string query = "insert into playlist_file (position, playlist_id, file_id) values (?, ?, ?)";
-			vector<string> bind;
-			bind.push_back(num);
-			bind.push_back(playlistID);
-			bind.push_back(fileID);
-			this->db()->execute(query, bind);
-		}
-	}
-
-	shared_ptr<UUID> PlaylistStore::create(const string& name) {
-		shared_ptr<UUID> result = generateID();
-		string query = "insert into playlist (id, name) values (?, ?)";
-		vector<string> bind;
-		bind.push_back(*result);
-		bind.push_back(name);
-		this->db()->execute(query, bind);
-		return result;
-	}
-	void PlaylistStore::remove(const string& playlistID) {
-		vector<string> bind;
-		bind.push_back(playlistID);
-		string query = "delete from playlist where id = ?";
-		this->db()->execute(query, bind);
-		query = "delete from playlist_file where playlist_id = ?";
-		this->db()->execute(query, bind);
-	}
-
-	shared_ptr<Playlist> PlaylistStore::info(const UUID& playlistID) {
-		string query = "select id, name from playlist where id = ? limit 1";
-		vector<string> bind;
-		bind.push_back(playlistID);
-		shared_ptr<Rows> rows = this->db()->execute(query, bind);
-		shared_ptr<Playlist> playlist;
-		for (unsigned int i =0; i < rows->size(); i++) {
-			Row row = (*rows)[i];
-			playlist.reset(new Playlist);
-			playlist->id = row[0];
-			playlist->name = row[1];
-		}
-		return playlist;
-	}
 	void FileStore::scan(const string & a_path) {
 		if (!fs::exists(a_path)) 
 			return;
@@ -176,8 +119,7 @@ namespace lark {
 				return;
 			TagLib::FileRef file_ref(a_path.c_str(), false);
 			if (!file_ref.isNull() && file_ref.tag()) {
-				cout << endl;
-				cout << a_path << endl;
+				cerr << "indexing " << a_path << endl;
 				TagLib::Tag *t = file_ref.tag();
 				string artist = t->artist().to8Bit(true);
 				string album = t->album().to8Bit(true);
@@ -185,7 +127,8 @@ namespace lark {
 				string genre = t->genre().to8Bit(true);
 				string year = t->year() > 0 ? lexical_cast<string>(t->year()) : "";
 				string track = t->track() > 0 ? lexical_cast<string>(t->track()) : "";
-				shared_ptr<UUID> fileID(create());
+				string uri = "file://" + a_path;
+				shared_ptr<UUID> fileID(generateID());
 				this->addField(*fileID, ARTIST, artist);
 				this->addField(*fileID, ARTIST, artist);
 				this->addField(*fileID, ALBUM, album);
@@ -193,7 +136,7 @@ namespace lark {
 				this->addField(*fileID, TITLE, title);
 				this->addField(*fileID, GENRE, genre);
 				this->addField(*fileID, TRACK, track);
-				this->addField(*fileID, PATH, a_path);
+				this->addField(*fileID, URI, uri);
 			}
 		}
 	}
@@ -211,19 +154,9 @@ namespace lark {
 		return result;
 	}
 
-	shared_ptr<UUID> FileStore::create() {
-		vector <string> bind;
-		shared_ptr<UUID> fileID(generateID());
-		bind.push_back(*fileID);
-		string query = "insert into file (id) values (?)";
-		this->db()->execute(query, bind);
-		return fileID;
-	}
-
 	shared_ptr<Rows> SQLiteDB::execute(const string & query, vector<string> & bind) { 
 		sqlite3_stmt *statement = NULL;
-		cout << "query:" << query << endl;
-		//cout << "bind:" << bind << endl;
+		//cout << "query:" << query << endl;
 		this->checkResultCode(sqlite3_prepare(this->db_, query.c_str(), -1, &statement, NULL));
 		for (unsigned int i = 0; i < bind.size(); i++) {
 			string s = bind[i];
@@ -242,7 +175,6 @@ namespace lark {
 					string value = "";
 					if (bytes != NULL) 
 						value = bytes;
-					cout << value << endl;
 					row.push_back(value);
 				}
 				result->push_back(row);
@@ -251,7 +183,6 @@ namespace lark {
 				break;
 			}
 		}
-		cout << "row count: " << row_count << endl;
 		return result;
 	}
 
@@ -263,7 +194,7 @@ namespace lark {
 				break;
 			default:
 				string msg = sqlite3_errmsg(db_);
-				cout << "sqlite error: " << msg << endl;
+				cerr << "sqlite error: " << msg << endl;
 				throw SQLite3Error(result_code);
 		}
 		return result_code;

@@ -152,13 +152,13 @@ namespace lark {
 
 	void Player::playAt(unsigned int newPosition) {
 		
-		if (playlist_->size() <= newPosition)  {
-			newPosition = playlist_->size() - 1;
+		if (playlist_->size() < newPosition)  {
+			return;
 		}
 		playlistPosition_ = newPosition;
-		File f = (*playlist_)[playlistPosition_];
-		string uri = "file://" + f.fileSystemPath;
-		playURI(uri);
+		File file = (*playlist_)[playlistPosition_];
+		if (file.uri.size() > 0)
+			playURI(file.uri);
 	}
 
 	shared_ptr<Status> Player::status() {

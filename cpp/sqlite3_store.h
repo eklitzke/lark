@@ -99,26 +99,14 @@ namespace lark {
 			virtual void scan(const string &path);
 			virtual shared_ptr<Files> list(const FileQuery& fileQuery);
 			virtual void addField(const UUID& fileID, const string& field, const string& value);
-			virtual shared_ptr<UUID> create();
 			virtual bool pathExists(const string & path); 
 			void initialize();
 			virtual shared_ptr<Files> rowsToFiles(shared_ptr<Rows>);
 	};
 
-	class PlaylistStore : public Model {
-		public:
-			PlaylistStore() : Model() { }
-			~PlaylistStore() {}
-			void initialize();
-			virtual shared_ptr<UUID> create(const string& name);
-			virtual void remove(const string& playlistID);
-			virtual void add(const UUID& playlistID, const vector<UUID>& songIDs);
-			virtual shared_ptr<Playlist> info(const UUID& playlistID);
-	};
-
 	class SQLite3Store {
 		public:
-			SQLite3Store() : playlist_store_(new PlaylistStore()), file_store_(new FileStore())  {} 
+			SQLite3Store() : file_store_(new FileStore())  {} 
 			
 			void connect(const string & database_path) {
 				shared_ptr<SQLiteDB> db(new SQLiteDB());
@@ -129,14 +117,11 @@ namespace lark {
 			virtual ~SQLite3Store() { }
 
 			virtual void setDatabase(shared_ptr<SQLiteDB> db) {
-				playlist_store_->setDatabase(db);
 				file_store_->setDatabase(db);
 			}
 
-			virtual shared_ptr<PlaylistStore> playlist_store() { return playlist_store_; }
 			virtual shared_ptr<FileStore> file_store() { return file_store_; }
 		private:
-			shared_ptr<PlaylistStore> playlist_store_;
 			shared_ptr<FileStore> file_store_;
 	};
 }
