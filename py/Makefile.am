@@ -8,6 +8,7 @@ clean-local:
 
 lark/gen: $(srcdir)/../interfaces/lark.thrift
 	rm -rf $(srcdir)/gen-py
+	rm -rf $(srcdir)/gen
 	thrift -gen py:new_style $(srcdir)/../interfaces/lark.thrift
 	mv gen-py/lark/gen $(srcdir)/lark/gen
 	rm -rf gen-py

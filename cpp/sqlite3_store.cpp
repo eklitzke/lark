@@ -1,5 +1,5 @@
-// This needs to be first to overcome a conflict on MacOSX between unistd and ossp/uuid.h
-#include <ossp/uuid.h>
+#include <tag.h>
+#include <fileref.h>
 
 #include "sqlite3_store.h"
 
@@ -142,15 +142,18 @@ namespace lark {
 	}
 
 	shared_ptr<UUID> Model::generateID() {
-		uuid_t *a_uuid;
-		size_t sz = 0;
-		uuid_create(&a_uuid);
-		uuid_make(a_uuid, UUID_MAKE_V1);
-		void *uuid_out = NULL;
-		uuid_export(a_uuid, UUID_FMT_STR, &uuid_out, &sz);
-		shared_ptr<UUID> result(new string((const char *)uuid_out, sz));
-		free(uuid_out);
-		uuid_destroy(a_uuid);
+		// Generate a pseudo random 128 bit number and hex encode it into a string
+		FILE *urandom = fopen("/dev/urandom", "r");
+		char output[32];
+		for (int i = 0; i < 16; i++) {
+			int8_t num;
+			while (fread(&num, 1, 1, urandom) <= 0) {
+				;
+			}
+			sprintf(output + (i * 2), "%02X", num);
+		}
+		fclose(urandom);
+		shared_ptr<UUID> result(new string(output, 32));
 		return result;
 	}
 

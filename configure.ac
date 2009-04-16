@@ -31,7 +31,6 @@ AC_CHECK_LIB([z], [main])
 PKG_CHECK_MODULES(SQLITE3, [sqlite3])
 PKG_CHECK_MODULES(THRIFT, [thrift])
 PKG_CHECK_MODULES(GSTREAMER, [gstreamer-base-0.10 gstreamer-0.10])
-PKG_CHECK_MODULES(UUID, [uuid])
 PKG_CHECK_MODULES(TAG, [taglib])
 
 # Checks for header files.
