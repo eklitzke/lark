@@ -94,12 +94,14 @@ namespace lark {
 	}
 
 	void Player::setStatus(const Status& newStatus) {
-		shared_ptr<Status> currStatus(status());
-		switch (currStatus->playback) {
+		Status currStatus = *status();
+		cerr << "new status:" << newStatus.position << endl;
+		cerr << "curr status:" << currStatus.position << endl;
+		switch (currStatus.playback) {
 			case PLAYING:
 				switch (newStatus.playback) {
 					case PLAYING:
-						if (currStatus->position != newStatus.position)
+						if (currStatus.position != newStatus.position)
 							playAt(newStatus.position);
 						break;
 					case PAUSED:
@@ -124,7 +126,7 @@ namespace lark {
 			case PAUSED:
 				switch (newStatus.playback) {
 					case PLAYING:
-						if (newStatus.position == currStatus->position)
+						if (newStatus.position == currStatus.position)
 							resume();
 						else
 							playAt(newStatus.position);
@@ -151,14 +153,17 @@ namespace lark {
 	}
 
 	void Player::playAt(unsigned int newPosition) {
-		
-		if (playlist_->size() < newPosition)  {
-			return;
-		}
-		playlistPosition_ = newPosition;
-		File file = (*playlist_)[playlistPosition_];
-		if (file.uri.size() > 0) {
-			playURI(file.uri);
+		while (1) {
+			cerr << "playAt: " << newPosition << endl;
+			if (newPosition >= playlist_->size())
+				return;
+			playlistPosition_ = newPosition;
+			File file = (*playlist_)[newPosition];
+			if (file.uri.size() > 0) {
+				playURI(file.uri);
+				return;
+			}
+			newPosition++;
 		}
 	}
 

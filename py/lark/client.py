@@ -71,26 +71,37 @@ if __name__ == '__main__':
 	cmd = args[0]
 	args = args[1:]
 
-	# You issue a play command like:
-	# python client.py play artist like foo title equals bar
-	if cmd in ('play', 'list'):
+	# You issue a queue/like command like:
+	# python client.py queue artist like foo title equals bar
+	if cmd in ('queue', 'list'):
 		file_query = make_query(args)
 		files = client.listFiles(file_query)
 		print 'Matched URIs'
 		print '------------'
 		print '\n'.join(f.uri for f in files)
 
-		if cmd == 'play':
+		if cmd == 'queue':
 			print '\nIssuing play request to larkd...'
 			client.enqueueByQuery(file_query)
-
+	elif cmd == 'play':
+		st = client.status()
+		st.playback = Playback.PLAYING
+		if st.position <= 0:
+			st.position = 0
+		if args:
+			st.position = int(args[0])
+		print st
+		client.setStatus(st)
 	elif cmd == 'scan':
 		fs_path = args[0]
 		print 'Scanning %s' % fs_path
 		client.scan(fs_path)
-	
 	elif cmd == 'playlist':
 		print client.playlist()
 	
 	elif cmd == 'status':
 		print client.status()
+		
+	else:
+		raise ValueError("no such command")
+
