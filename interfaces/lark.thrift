@@ -53,7 +53,7 @@ struct Playlist {
 }
 
 enum Playback {
-	STOPPED,
+	STOPPED = 0,
 	PLAYING,
 	PAUSED
 }

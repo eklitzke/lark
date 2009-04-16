@@ -68,8 +68,11 @@ if __name__ == '__main__':
 
 	client = make_client(opts.port, opts.host)
 
-	cmd = args[0]
-	args = args[1:]
+	if not args:
+		cmd = 'status'
+	else:
+		cmd = args[0]
+		args = args[1:]
 
 	# You issue a queue/like command like:
 	# python client.py queue artist like foo title equals bar
@@ -80,9 +83,16 @@ if __name__ == '__main__':
 		print '------------'
 		print '\n'.join(f.uri for f in files)
 
+		pl = client.playlist()
 		if cmd == 'queue':
 			print '\nIssuing play request to larkd...'
 			client.enqueueByQuery(file_query)
+		st = client.status()
+		if st.playback != Playback.PLAYING:
+			st.position = len(pl)
+			st.playback = Playback.PLAYING
+			client.setStatus(st)
+
 	elif cmd == 'play':
 		st = client.status()
 		st.playback = Playback.PLAYING
