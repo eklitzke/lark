@@ -25,6 +25,7 @@ A partial list of dependencies:
 * thrift (not packaged for fedora)
 * gstreamer-devel
 * sqlite-devel
+* taglib-devel
 
 Fedora has an issue finding Boost from configure scripts, and you need to use
 the `--with-boost-*` options to get configure to pass, and get things to build.
