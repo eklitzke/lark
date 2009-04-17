@@ -1,7 +1,57 @@
 #include "player.h"
 
 namespace lark {
-	gboolean bus_call (GstBus *bus, GstMessage *msg, gpointer data) {
+
+	void getField(const File & aFile, const string & field, string & result) {
+		if (field == ARTIST)
+			result = aFile.artist;
+		else if (field == ALBUM) 
+			result = aFile.album;
+		else if (field == ID)
+			result = aFile.id;
+		else if (field == TRACK) 
+			result = aFile.track;
+		else if (field == GENRE)
+			result = aFile.genre;
+		else if (field == TITLE)
+			result = aFile.title;
+		else
+			result = "";
+		//cerr << "field: " << field << "result: " << result << endl;
+	}
+
+	class FileComparator {
+		public:
+			FileComparator(shared_ptr<FileSort> sort) : sort_(sort) {
+			}
+			virtual ~FileComparator() { } ;
+
+			bool operator () (const File & a, const File & b) {
+				for (unsigned int i = 0; i < sort_->sortFields.size(); i++) {
+					SortField sortField = sort_->sortFields[i];
+					if (sortField.field.size() == 0)
+						continue;
+					string left, right;
+					getField(a, sortField.field, left);
+					getField(b, sortField.field, right);
+					//cerr << "left: " << left << "right: " << right << endl;
+					// FIXME: Replace this with a UTF8 natural language compare
+					int cmp = left.compare(right);
+					if (cmp == 0)
+						continue;
+					return cmp < 0;
+					//if (cmp < 0)
+					//	return true;
+					//return (sortField.order == ASCENDING && cmp < 0);
+				}
+				return false;
+			};
+
+		private:
+			shared_ptr<FileSort> sort_;
+	};
+	
+	gboolean bus_call(GstBus *bus, GstMessage *msg, gpointer data) {
 		Player *player = (Player *)data;
 		return player->busEvent(bus, msg);
 	}
@@ -54,6 +104,18 @@ namespace lark {
 	void Player::start() {
 		if (eventThread_.use_count() == 0)
 			eventThread_.reset(new thread (&Player::eventLoop, this));
+		shared_ptr<FileSort> defaultSort(new FileSort);
+		SortField artistField, albumField, trackField, titleField;
+		artistField.field = ARTIST;
+		defaultSort->sortFields.push_back(artistField);
+		albumField.field = ALBUM;
+		defaultSort->sortFields.push_back(albumField);
+		trackField.field = TRACK;
+		defaultSort->sortFields.push_back(trackField);
+		titleField.field = TITLE;
+		defaultSort->sortFields.push_back(titleField);
+		shared_ptr<FileQuery> defaultQuery(new FileQuery);
+		updateFilterAndSort(defaultQuery, defaultSort);
 	}
 
 	void Player::eventLoop() {
@@ -90,13 +152,43 @@ namespace lark {
 			File file((*files)[i]);
 			playlist_->push_back(file);	
 		}
-		playlistGeneration_++;
+	}
+
+	bool Player::updateFilterAndSort(shared_ptr<FileQuery> fileFilter, shared_ptr<FileSort> fileSort) {
+		if (*filter_ == *fileFilter && *fileSort == *sort_) {
+			cerr << "The file filter and sort has not changed, skipping update" << endl;
+			return false;
+		}
+				
+		shared_ptr<Files> result;
+		if (*fileFilter != *filter_ || playlist_->size() == 0) {
+			cerr << "The file filter has changed, reloading files" << endl;
+			result = dataStore_->file_store()->list(*fileFilter);
+		} else {
+			cerr << "Reusing old file list" << endl;  
+			result.reset(new Files(*playlist_));
+		}
+		cout << "found " << result->size() << " files" << endl;
+		FileComparator fileComparator(fileSort);
+		sort(result->begin(), result->end(), fileComparator);
+		playlist_ = result;
+		filter_ = fileFilter;
+		sort_ = fileSort;
+		cerr << "done reloading files" << endl;
+		return true;
 	}
 
 	void Player::setStatus(const Status& newStatus) {
 		Status currStatus = *status();
-		cerr << "new status:" << newStatus.position << endl;
-		cerr << "curr status:" << currStatus.position << endl;
+
+		shared_ptr<FileQuery> file_filter(new FileQuery);
+		*file_filter = newStatus.filter;
+
+		shared_ptr<FileSort> file_sort(new FileSort);
+		*file_sort = newStatus.sort;
+
+		updateFilterAndSort(file_filter, file_sort);
+
 		switch (currStatus.playback) {
 			case PLAYING:
 				switch (newStatus.playback) {
@@ -171,7 +263,7 @@ namespace lark {
 		shared_ptr<Status> result(new Status);
 		GstState pending;
 		GstState curr;
-		GstStateChangeReturn st = gst_element_get_state(playElement, &pending, &curr, 0);
+		gst_element_get_state(playElement, &pending, &curr, 0);
 		switch (curr) {
 			case GST_STATE_PLAYING:
 				result->playback = PLAYING;
@@ -183,8 +275,9 @@ namespace lark {
 				result->playback = STOPPED;
 				break;
 		}
+		result->sort = *sort_;
+		result->filter = *filter_;
 		result->position = playlistPosition_;
-		result->playlistGeneration = playlistGeneration_;
 		return result;
 	}
 }

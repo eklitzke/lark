@@ -68,8 +68,11 @@ if __name__ == '__main__':
 
 	client = make_client(opts.port, opts.host)
 
-	cmd = args[0]
-	args = args[1:]
+	if not args:
+		cmd = 'status'
+	else:
+		cmd = args[0]
+		args = args[1:]
 
 	# You issue a queue/like command like:
 	# python client.py queue artist like foo title equals bar
@@ -80,9 +83,22 @@ if __name__ == '__main__':
 		print '------------'
 		print '\n'.join(f.uri for f in files)
 
+		pl = client.playlist()
 		if cmd == 'queue':
 			print '\nIssuing play request to larkd...'
 			client.enqueueByQuery(file_query)
+		st = client.status()
+		if st.playback != Playback.PLAYING:
+			st.position = len(pl)
+			st.playback = Playback.PLAYING
+			client.setStatus(st)
+	elif cmd == 'filter':
+		query = make_query(args)
+		st = client.status()
+		st.filter = query
+		st.playback = Playback.PLAYING
+		st.position = 0
+		client.setStatus(st)
 	elif cmd == 'play':
 		st = client.status()
 		st.playback = Playback.PLAYING
@@ -96,9 +112,22 @@ if __name__ == '__main__':
 		fs_path = args[0]
 		print 'Scanning %s' % fs_path
 		client.scan(fs_path)
+	elif cmd == 'next':
+		st = client.status()
+		st.position += 1
+		st.playback = Playback.PLAYING
+		client.setStatus(st)
+	elif cmd == 'prev':
+		st = client.status()
+		st.position -= 1
+		st.playback = Playback.PLAYING
+		client.setStatus(st)
+	elif cmd == 'pause':
+		st = client.status()
+		st.playback = Playback.PAUSED
+		client.setStatus(st)
 	elif cmd == 'playlist':
-		print client.playlist()
-	
+		pprint.pprint(client.playlist())
 	elif cmd == 'status':
 		print client.status()
 	else:

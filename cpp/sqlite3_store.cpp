@@ -4,13 +4,7 @@
 #include "sqlite3_store.h"
 
 namespace lark {
-	static const string URI = "path";
-	static const string ARTIST = "artist";
-	static const string ALBUM = "album";
-	static const string TITLE = "title";
-	static const string GENRE = "genre";
-	static const string TRACK = "track";
-	static const string YEAR = "year";
+	
 
 	shared_ptr<Files> FileStore::list(const FileQuery & fileQuery) {
 		string query = "SELECT sf.file_id, sf.field, sf.value FROM file_field sf WHERE sf.file_id IN (SELECT sf2.file_id FROM file_field sf2 ";
@@ -46,7 +40,7 @@ namespace lark {
 			bindFields.push_back(term.value);
 		}
 		query += ") ORDER BY sf.file_id ASC";
-		return rowsToFiles(this->db()->execute(query, bindFields));
+		return rowsToFiles(db()->execute(query, bindFields));
 	}
 	shared_ptr<Files> FileStore::rowsToFiles(shared_ptr<Rows> theRows) {
 		shared_ptr<Files> files(new Files);
@@ -90,18 +84,19 @@ namespace lark {
 		vector<string> bind;
 		bind.push_back(URI);
 		bind.push_back(path);
-		shared_ptr<Rows> result = this->db()->execute(query, bind);
+		shared_ptr<Rows> result = db()->execute(query, bind);
 		return result->size() > 0;
 	}
 	void SQLiteDB::initialize() { 
-		this->execute("pragma auto_vacuum = 1");
-		this->execute("pragma encoding = \"UTF-8\"");
+		execute("pragma auto_vacuum = 1");
+		execute("pragma encoding = \"UTF-8\"");
+		sqlite3_busy_timeout(db_, 100);
 	}
 
 	void FileStore::initialize() { 
-		this->db()->execute("create table if not exists file_field (id integer primary key not null, file_id text collate nocase, field text collate nocase not null, value text collate nocase not null)");
-		this->db()->execute("create index if not exists file_field_value_idx ON file_field(value)");
-		this->db()->execute("create index if not exists file_field_file_idx ON file_field(file_id)");
+		db()->execute("create table if not exists file_field (id integer primary key not null, file_id text collate nocase, field text collate nocase not null, value text collate nocase not null)");
+		db()->execute("create index if not exists file_field_value_idx ON file_field(value)");
+		db()->execute("create index if not exists file_field_file_idx ON file_field(file_id)");
 	}
 
 	void FileStore::scan(const string & a_path) {
@@ -112,10 +107,10 @@ namespace lark {
 			for (fs::directory_iterator curr(a_path); curr != end; ++curr) {
 				fs::path p = curr->path();
 				string s = p.string();
-				this->scan(s);
+				scan(s);
 			}
 		} else if (fs::is_regular_file(a_path)) {
-			if (this->pathExists(a_path))
+			if (pathExists(a_path))
 				return;
 			TagLib::FileRef file_ref(a_path.c_str(), false);
 			if (!file_ref.isNull() && file_ref.tag()) {
@@ -129,14 +124,14 @@ namespace lark {
 				string track = t->track() > 0 ? lexical_cast<string>(t->track()) : "";
 				string uri = "file://" + a_path;
 				shared_ptr<UUID> fileID(generateID());
-				this->addField(*fileID, ARTIST, artist);
-				this->addField(*fileID, ARTIST, artist);
-				this->addField(*fileID, ALBUM, album);
-				this->addField(*fileID, YEAR, year);
-				this->addField(*fileID, TITLE, title);
-				this->addField(*fileID, GENRE, genre);
-				this->addField(*fileID, TRACK, track);
-				this->addField(*fileID, URI, uri);
+				addField(*fileID, ARTIST, artist);
+				addField(*fileID, ARTIST, artist);
+				addField(*fileID, ALBUM, album);
+				addField(*fileID, YEAR, year);
+				addField(*fileID, TITLE, title);
+				addField(*fileID, GENRE, genre);
+				addField(*fileID, TRACK, track);
+				addField(*fileID, URI, uri);
 			}
 		}
 	}
@@ -160,7 +155,7 @@ namespace lark {
 	shared_ptr<Rows> SQLiteDB::execute(const string & query, vector<string> & bind) { 
 		sqlite3_stmt *statement = NULL;
 		//cout << "query:" << query << endl;
-		this->checkResultCode(sqlite3_prepare(this->db_, query.c_str(), -1, &statement, NULL));
+		checkResultCode(sqlite3_prepare(db_, query.c_str(), -1, &statement, NULL));
 		for (unsigned int i = 0; i < bind.size(); i++) {
 			string s = bind[i];
 			checkResultCode(sqlite3_bind_text(statement, i + 1, s.c_str(), s.size(), SQLITE_TRANSIENT));
@@ -211,7 +206,7 @@ namespace lark {
 		bind.push_back(field);
 		bind.push_back(value);
 		string query = "insert into file_field (file_id, field, value) values (?, ?, ?)";
-		this->db()->execute(query, bind);
+		db()->execute(query, bind);
 	}
 
 }
