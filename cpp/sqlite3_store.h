@@ -15,6 +15,16 @@ namespace lark {
 	using namespace std;
 	using namespace boost;
 
+	static const string ID = "id";
+	static const string URI = "path";
+	static const string ARTIST = "artist";
+	static const string ALBUM = "album";
+	static const string TITLE = "title";
+	static const string GENRE = "genre";
+	static const string TRACK = "track";
+	static const string YEAR = "year";
+
+
 	typedef vector<string> Row;
 	typedef vector<Row> Rows;
 	typedef vector<File> Files;

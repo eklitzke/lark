@@ -40,16 +40,18 @@ struct FileQuery {
     1:list<BinaryTerm> binaryTerms;
 }
 
-enum PlaylistType { 
-	normal = 0,
+enum Order { 
+	ASCENDING = 0,
+	DESCENDING = 1
 }
 
-struct Playlist {
-	1: UUID id,
-	2: string name,
-	3: PlaylistType playlist_type,
-	4: list<File> files,
-	5: i64 position
+struct SortField { 
+	1: string field,
+	2: Order order
+}
+
+struct FileSort { 
+	1: list<SortField> sortFields
 }
 
 enum Playback {
@@ -58,12 +60,18 @@ enum Playback {
 	PAUSED
 }
 
+enum Mode { 
+	LIBRARY = 0
+}
+
 struct Status { 
 	1: Playback playback,
 	2: i32 position, // the position in the playlist
-	3: i32 playlistGeneration, // whenever the playlist changes, this is incremented
 	4: i32 duration,
-	5: i32 elapsed
+	5: i32 elapsed,
+	6: Mode playlistMode,
+	7: FileSort sort,
+	8: FileQuery filter
 }
 
 service LarkService {
@@ -79,21 +87,8 @@ service LarkService {
   oneway void enqueueByQuery(1:FileQuery query),
 
   list<File> playlist(),
-  oneway void setPlaylist(1:list<File> files),
-
   oneway void setStatus(1:Status newStatus),
   Status status()
-
-  // playlist commands
-  /*
-  oneway void move(1:list<UUID> fileIDs, 2:i32 position),
-  list<UUID> listPlaylists(), 
-  UUID createPlaylist(1:string name),
-  Playlist playlistInfo(1:UUID playlistID),
-  oneway void addToPlaylist(1:UUID playlistID, 2:list<UUID> songIDs)
-  oneway void removeFromPlaylist(1:UUID playlistID, 2:list<UUID> songIDs)
-  oneway void removePlaylist(1:UUID playlistID)
-  */
 }
 
 

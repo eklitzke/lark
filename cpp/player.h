@@ -21,8 +21,12 @@ using namespace boost;
 namespace lark {
 	class Player { 
 		public:
-			Player(shared_ptr<SQLite3Store> dataStore) : dataStore_(dataStore), playlistPosition_(-1), playlistGeneration_(0),
-			playlist_(new Files) { }
+			Player(shared_ptr<SQLite3Store> dataStore) : 
+				dataStore_(dataStore), 
+				playlistPosition_(0),
+				playlist_(new Files), 
+				sort_(new FileSort),
+				filter_(new FileQuery) { }
 			virtual ~Player();
 			virtual void start();
 			/* Play all of the items in a file query. */
@@ -32,13 +36,10 @@ namespace lark {
 			virtual shared_ptr<Files> playlist() { 
 				return playlist_; 
 			}
-			virtual void setPlaylist(const Files& files) { 
-				*playlist_ = files; 
-				playlistGeneration_++; 
-			}
 			virtual shared_ptr<Status> status();
 			virtual void setStatus(const Status&);
 		private:
+			virtual bool updateFilterAndSort(shared_ptr<FileQuery> fileFilter, shared_ptr<FileSort> fileSort);
 			virtual void stop();
 			virtual void resume();
 			virtual void pause();
@@ -50,8 +51,9 @@ namespace lark {
 			shared_ptr<SQLite3Store> dataStore_;
 			shared_ptr<UUID> currentPlaylistID_;
 			int playlistPosition_;
-			int playlistGeneration_;
 			shared_ptr<Files> playlist_;
+			shared_ptr<FileSort> sort_;
+			shared_ptr<FileQuery> filter_;
 	};
 
 }

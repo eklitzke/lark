@@ -70,10 +70,6 @@ class LarkServiceHandler : virtual public LarkServiceIf {
 	_return = *player_->status();
   }
 
-  virtual void setPlaylist(const Files & files) {
-	  player_->setPlaylist(files);
-  }
-	
   virtual void playlist(Files & _return) { 
 	   _return = *player_->playlist();
   }
